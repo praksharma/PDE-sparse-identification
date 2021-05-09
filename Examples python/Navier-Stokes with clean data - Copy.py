@@ -60,7 +60,6 @@ n,m,steps = W.shape # New n,m,steps after cutting out the cylinder
 
 print('Geometry involving cylinder has been removed')
 
-
 # Here we take the SVD of the data and reconstruct either with a reduced basis or everything.  It isn't necesarry but is interesting to show that we can still derive the correct PDE with the first 50 modes (maybe less). 
 
 # In[3]:
@@ -107,61 +106,48 @@ print('Data successfully reshaped after SVD')
 # Now randomly sample some points to use.  See figure 1, panel 2a-2c for visual description of what we're doing here.  5000 spatial points are samples and 60 timepoints are viewed at each one.  Note that we still need nearby points to take derivatives.
 
 # In[7]:
-print('Picking up random points from the data')
-# Sample a collection of data points, stay away from edges so I can just use centered finite differences.
-# The coordinates is chosen randomly from the sliced data. That is why random.choice is used here
-np.random.seed(0) # generates same set of random numbers each time
 
-num_xy = 5000 # number of x and y points to be taken randomly in the collection
-num_t = 60  # number of timesteps to be taken in the collection
-num_points = num_xy * num_t  # total number of points in the collection
-# As we can't take derivative of the corner data using polynomial interpolation
-boundary = 5 # Selected points in y axis [boundary:m-boundary]
-boundary_x = 10 # Selected points in x axis [boundary_x:n-boundary_x]
-points = {}  # dictionary to store the collection
+
+# Sample a collection of data points, stay away from edges so I can just use centered finite differences.
+num_xy = 5000
+# 2t+12=steps =>t<44.5
+num_t = 40
+num_points = num_xy * num_t
+boundary = 5
+boundary_x = 10
+points = {}
 count = 0
 scatterx=np.array([])
 scattery=np.array([])
-for p in range(num_xy): # for
-    x = np.random.choice(np.arange(boundary_x,n-boundary_x),1)[0] # randomly choose any x coordinate
-    y = np.random.choice(np.arange(boundary,m-boundary),1)[0]    # randomly choose any y coordinate 
-    # the following loop would insert same x and y coordinates for each time step
+for p in range(num_xy):
+    x = np.random.choice(np.arange(boundary_x,n-boundary_x),1)[0]
+    y = np.random.choice(np.arange(boundary,m-boundary),1)[0]
     scatterx=np.append(scatterx, x)
     scattery=np.append(scattery, y)
     for t in range(num_t):
-        points[count] = [x,y,t+max(boundary, boundary_x)] 
-        # t ranges from max(boundary, boundary_x) to num_t+max(boundary, boundary_x)
-        # ensure that max(boundary, boundary_x)!<0 && num_t+max(boundary, boundary_x)!>steps
-        # The t starts from max(boundary, boundary_x) because we need previous time steps for partial derivative wrt time
+        points[count] = [x,y,2*t+12]
         count = count + 1
 
-'''
-                       m
-             --------------------
-             |                  |
-boundary_x   |      domain      |  n
-             |                  |
-             --------------------
-                   boundary
-
-'''
 
 # ## Construct $\Theta (U)$ and compute $U_t$
 # 
 # Take derivatives and assemble into $\Theta(\omega, u ,v)$
 
 # In[plot]
-plt.figure(1)
-xx, yy = np.meshgrid(
-    np.arange(325)*dx,
-    np.arange(170)*dy)
-plt.pcolor(xx,yy,Wn[:,:,75].T,cmap='coolwarm', vmin=-4, vmax=4)
+# plt.figure(1)
+# xx, yy = np.meshgrid(
+#     np.arange(325)*dx,
+#     np.arange(170)*dy)
+# plt.pcolor(xx,yy,Wn[:,:,75].T,cmap='coolwarm', vmin=-4, vmax=4)
 
 # plt.scatter(scatterx, scattery,s=np.pi, c=(0,0,0), alpha=0.5)
 # plt.show()
 # In[8]:
-print('Computing derivatives')
-# The x and y components of the velocity field are given as forcing terms to the PDE.  That is, they appear in $\Theta$, but are not differentiated.
+
+
+# Take derivatives of vorticity at each point.  Not the most elegant way of doing this...
+#PolyDiffPoint(array of fcn vals, domain vals, degree, derivatives to take): -> array of derivatives  
+
 # Take up to second order derivatives.
 w = np.zeros((num_points,1))
 u = np.zeros((num_points,1))
@@ -173,42 +159,30 @@ wxx = np.zeros((num_points,1))
 wxy = np.zeros((num_points,1))
 wyy = np.zeros((num_points,1))
 
-#N = 2*boundary-1  # odd number of points to use in fitting
-#Nx = 2*boundary_x-1  # odd number of points to use in fitting
+N = 2*boundary-1  # odd number of points to use in fitting
+Nx = 2*boundary_x-1  # odd number of points to use in fitting
 deg = 5 # degree of polynomial to use
 
 for p in points.keys():
-    
     if p%10000==0:
         print('Step: ',str(p),' of ',str(len(points)))
     [x,y,t] = points[p]
     w[p] = Wn[x,y,t]
     u[p] = Un[x,y,t]
     v[p] = Vn[x,y,t]
-    # def PolyDiffPoint(u, x, deg = 3, diff = 1, index = None):
-    # Here the length of u and x should be same for the least squares
-    # wt[p] = PolyDiffPoint(Wn[int(x),int(y),int(t-boundary/2):int(t+boundary/2)], np.arange(boundary)*dt, deg, 1)[0] # see line 127
-    # x_diff = PolyDiffPoint(Wn[int(x-boundary_x/2):int(x+boundary_x/2),int(y),int(t)], np.arange(boundary_x)*dx, deg, 2)  # x depends on boundary_x (line 123)
-    # y_diff = PolyDiffPoint(Wn[int(x),int(y-boundary/2):int(y+boundary/2),int(t)], np.arange(boundary)*dy, deg, 2)          # x depends on boundary (line 124)
-    # wx[p] = x_diff[0] 
-    # wy[p] = y_diff[0]  
     
-    # x_diff_yp = PolyDiffPoint(Wn[int(x-boundary_x/2):int(x+boundary_x/2),int(y+1),t], np.arange(boundary_x)*dx, deg, 2) # w_x^(y+1)
-    # x_diff_ym = PolyDiffPoint(Wn[int(x-boundary_x/2):int(x+boundary_x/2),int(y-1),t], np.arange(boundary_x)*dx, deg, 2) # w_x^(y-1)
-   
-    wt[p] = PolyDiffPoint(Wn[int(x),int(y),int(t-boundary):int(t+boundary)], np.arange(2*boundary)*dt, deg, 1)[0] # see line 127
-    x_diff = PolyDiffPoint(Wn[int(x-boundary_x):int(x+boundary_x),int(y),int(t)], np.arange(2*boundary_x)*dx, deg, 2)  # x depends on boundary_x (line 123)
-    y_diff = PolyDiffPoint(Wn[int(x),int(y-boundary):int(y+boundary),int(t)], np.arange(2*boundary)*dy, deg, 2)          # x depends on boundary (line 124)
-    wx[p] = x_diff[0] 
-    wy[p] = y_diff[0]  
+    wt[p] = PolyDiffPoint(Wn[x,y,int(t-(N-1)/2):int(t+(N+1)/2)], np.arange(N)*dt, deg, 1)[0]
     
-    x_diff_yp = PolyDiffPoint(Wn[int(x-boundary_x):int(x+boundary_x),int(y+1),t], np.arange(2*boundary_x)*dx, deg, 2) # w_x^(y+1)
-    x_diff_ym = PolyDiffPoint(Wn[int(x-boundary_x):int(x+boundary_x),int(y-1),t], np.arange(2*boundary_x)*dx, deg, 2) # w_x^(y-1)
-   
+    x_diff = PolyDiffPoint(Wn[int(x-(Nx-1)/2):int(x+(Nx+1)/2),y,t], np.arange(Nx)*dx, deg, 2)
+    y_diff = PolyDiffPoint(Wn[x,int(y-(N-1)/2):int(y+(N+1)/2),t], np.arange(N)*dy, deg, 2)
+    wx[p] = x_diff[0]
+    wy[p] = y_diff[0]
     
-    # second derivative
+    x_diff_yp = PolyDiffPoint(Wn[int(x-(Nx-1)/2):int(x+(Nx+1)/2),y+1,t], np.arange(Nx)*dx, deg, 2)
+    x_diff_ym = PolyDiffPoint(Wn[int(x-(Nx-1)/2):int(x+(Nx+1)/2),y-1,t], np.arange(Nx)*dx, deg, 2)
+    
     wxx[p] = x_diff[1]
-    wxy[p] = (x_diff_yp[0]-x_diff_ym[0])/(2*dy) # central difference
+    wxy[p] = (x_diff_yp[0]-x_diff_ym[0])/(2*dy)
     wyy[p] = y_diff[1]
 
 

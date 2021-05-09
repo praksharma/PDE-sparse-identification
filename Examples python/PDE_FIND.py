@@ -69,7 +69,7 @@ def FiniteDiff(u, dx, d):
     """
     
     n = u.size
-    ux = np.zeros(n, dtype=np.complex64)
+    ux = np.zeros(n, dtype=np.float64)
     
     if d == 1:
         for i in range(1,n-1):
@@ -111,7 +111,7 @@ def ConvSmoother(x, p, sigma):
     """
     
     n = len(x)
-    y = np.zeros(n, dtype=np.complex64)
+    y = np.zeros(n, dtype=np.float64)
     g = np.exp(-np.power(np.linspace(-p,p,2*p),2)/(2.0*sigma**2))
 
     for i in range(n):
@@ -228,7 +228,7 @@ def build_Theta(data, derivatives, derivatives_description, P, data_description 
     for power in powers: rhs_functions[power] = [lambda x, y = power: f(x,y), power]
 
     # First column of Theta is just ones.
-    Theta = np.ones((n,1), dtype=np.complex64)
+    Theta = np.ones((n,1), dtype=np.float64)
     descr = ['']
     
     # Add the derivaitves onto Theta
@@ -240,7 +240,7 @@ def build_Theta(data, derivatives, derivatives_description, P, data_description 
     for D in range(derivatives.shape[1]):
         for k in rhs_functions.keys():
             func = rhs_functions[k][0]
-            new_column = np.zeros((n,1), dtype=np.complex64)
+            new_column = np.zeros((n,1), dtype=np.float64)
             for i in range(n):
                 new_column[i] = func(data[i,:])*derivatives[i,D]
             Theta = np.hstack([Theta, new_column])
@@ -323,10 +323,10 @@ def build_linear_system(u, dt, dx, D = 3, P = 3,time_diff = 'poly',space_diff = 
     ########################
     # First take the time derivaitve for the left hand side of the equation
     ########################
-    ut = np.zeros((n2,m2), dtype=np.complex64)
+    ut = np.zeros((n2,m2), dtype=np.float64)
 
     if time_diff == 'FDconv':
-        Usmooth = np.zeros((n,m), dtype=np.complex64)
+        Usmooth = np.zeros((n,m), dtype=np.float64)
         # Smooth across x cross-sections
         for j in range(m):
             Usmooth[:,j] = ConvSmoother(u[:,j],width_t,sigma)
@@ -354,8 +354,8 @@ def build_linear_system(u, dt, dx, D = 3, P = 3,time_diff = 'poly',space_diff = 
     ########################
 
     u2 = u[offset_x:n-offset_x,offset_t:m-offset_t]
-    Theta = np.zeros((n2*m2, (D+1)*(P+1)), dtype=np.complex64)
-    ux = np.zeros((n2,m2), dtype=np.complex64)
+    Theta = np.zeros((n2*m2, (D+1)*(P+1)), dtype=np.float64)
+    ux = np.zeros((n2,m2), dtype=np.float64)
     rhs_description = ['' for i in range((D+1)*(P+1))]
 
     if space_diff == 'poly': 
@@ -375,7 +375,7 @@ def build_linear_system(u, dt, dx, D = 3, P = 3,time_diff = 'poly',space_diff = 
                 elif space_diff == 'FD': ux[:,i] = FiniteDiff(u[:,i+offset_t],dx,d)
                 elif space_diff == 'poly': ux[:,i] = Du[i][:,d-1]
                 elif space_diff == 'Fourier': ux[:,i] = np.fft.ifft(ik**d*np.fft.fft(ux[:,i]))
-        else: ux = np.ones((n2,m2), dtype=np.complex64) 
+        else: ux = np.ones((n2,m2), dtype=np.float64) 
             
         for p in range(P+1):
             Theta[:, d*(P+1)+p] = np.reshape(np.multiply(ux, np.power(u2,p)), (n2*m2), order='F')
@@ -435,7 +435,7 @@ def TrainSTRidge(R, Ut, lam, d_tol, maxit = 25, STR_iters = 10, l0_penalty = Non
 
     # Get the standard least squares estimator
     w = np.zeros((D,1))
-    w_best = np.linalg.lstsq(TrainR, TrainY)[0]
+    w_best = np.linalg.lstsq(TrainR, TrainY,rcond=None)[0]
     err_best = np.linalg.norm(TestY - TestR.dot(w_best), 2) + l0_penalty*np.count_nonzero(w_best)
     tol_best = 0
 
@@ -470,13 +470,13 @@ def Lasso(X0, Y, lam, w = np.array([0]), maxit = 100, normalize = 2):
     
     # Obtain size of X
     n,d = X0.shape
-    X = np.zeros((n,d), dtype=np.complex64)
+    X = np.zeros((n,d), dtype=np.float64)
     Y = Y.reshape(n,1)
     
     # Create w if none is given
     if w.size != d:
-        w = np.zeros((d,1), dtype=np.complex64)
-    w_old = np.zeros((d,1), dtype=np.complex64)
+        w = np.zeros((d,1), dtype=np.float64)
+    w_old = np.zeros((d,1), dtype=np.float64)
         
     # Initialize a few other parameters
     converge = 0
@@ -520,13 +520,13 @@ def ElasticNet(X0, Y, lam1, lam2, w = np.array([0]), maxit = 100, normalize = 2)
     
     # Obtain size of X
     n,d = X0.shape
-    X = np.zeros((n,d), dtype=np.complex64)
+    X = np.zeros((n,d), dtype=np.float64)
     Y = Y.reshape(n,1)
     
     # Create w if none is given
     if w.size != d:
-        w = np.zeros((d,1), dtype=np.complex64)
-    w_old = np.zeros((d,1), dtype=np.complex64)
+        w = np.zeros((d,1), dtype=np.float64)
+    w_old = np.zeros((d,1), dtype=np.float64)
         
     # Initialize a few other parameters
     converge = 0
@@ -571,7 +571,7 @@ def STRidge(X0, y, lam, maxit, tol, normalize = 2, print_results = False):
     """
 
     n,d = X0.shape
-    X = np.zeros((n,d), dtype=np.complex64)
+    X = np.zeros((n,d), dtype=np.float64)
     # First normalize data
     if normalize != 0:
         Mreg = np.zeros((d,1))
@@ -581,7 +581,7 @@ def STRidge(X0, y, lam, maxit, tol, normalize = 2, print_results = False):
     else: X = X0
     
     # Get the standard ridge esitmate
-    if lam != 0: w = np.linalg.lstsq(X.T.dot(X) + lam*np.eye(d),X.T.dot(y))[0]
+    if lam != 0: w = np.linalg.lstsq(X.T.dot(X) + lam*np.eye(d),X.T.dot(y),rcond=None)[0]
     else: w = np.linalg.lstsq(X,y)[0]
     num_relevant = d
     biginds = np.where( abs(w) > tol)[0]
@@ -607,11 +607,11 @@ def STRidge(X0, y, lam, maxit, tol, normalize = 2, print_results = False):
         
         # Otherwise get a new guess
         w[smallinds] = 0
-        if lam != 0: w[biginds] = np.linalg.lstsq(X[:, biginds].T.dot(X[:, biginds]) + lam*np.eye(len(biginds)),X[:, biginds].T.dot(y))[0]
+        if lam != 0: w[biginds] = np.linalg.lstsq(X[:, biginds].T.dot(X[:, biginds]) + lam*np.eye(len(biginds)),X[:, biginds].T.dot(y),rcond=None)[0]
         else: w[biginds] = np.linalg.lstsq(X[:, biginds],y)[0]
 
     # Now that we have the sparsity pattern, use standard least squares to get w
-    if biginds != []: w[biginds] = np.linalg.lstsq(X[:, biginds],y)[0]
+    if biginds != []: w[biginds] = np.linalg.lstsq(X[:, biginds],y,rcond=None)[0]
     
     if normalize != 0: return np.multiply(Mreg,w)
     else: return w
@@ -652,7 +652,7 @@ def FoBaGreedy(X, y, epsilon = 0.1, maxit_f = 100, maxit_b = 5, backwards_freq =
         i = zero_coeffs[np.argmin(err_after_addition)]
         
         F[k] = F[k-1].union({i})
-        w[k] = np.zeros((d,1), dtype=np.complex64)
+        w[k] = np.zeros((d,1), dtype=np.float64)
         w[k][list(F[k])] = np.linalg.lstsq(X[:, list(F[k])], y)[0]
 
         # check for break condition

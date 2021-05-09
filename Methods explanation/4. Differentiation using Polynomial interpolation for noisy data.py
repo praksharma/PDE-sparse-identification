@@ -5,7 +5,7 @@ Created on Mon May  3 19:01:13 2021
 @author: Prakhar Sharma
 """
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 
 """
     u = values of some function
@@ -50,4 +50,5 @@ for j in range(width, n-width):
 
 plt.figure(1)
 plt.plot(x,deriv)
-plt.plot(x,du)
+plt.plot(x[:-2],du)
+plt.legend(['np.gradient','polynomial'])
