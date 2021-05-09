@@ -126,6 +126,20 @@ for p in range(num_xy):
     scattery=np.append(scattery, y)
     for t in range(num_t):
         points[count] = [x,y,2*t+12]
+        '''
+        Please note: boundary = 5, boundary_x = 10, steps=101 and num_t=40
+        here min(2*t+12)=12 && max(2*t+12)=92
+        So, in next section
+        N = 2*boundary-1=9
+        Nx = 2*boundary_x-1=19
+        So, here 2*t+12 becomes t
+        wt[p] = PolyDiffPoint(Wn[x,y,int(t-(N-1)/2):int(t+(N+1)/2)], np.arange(N)*dt, deg, 1)[0]
+        min(t-(N-1)/2)=(when t=12)= 8
+        min(t+(N+1)/2)=(when t=12)= 17
+        max(t-(N-1)/2)=(when t=92)=88
+        max(t+(N+1)/2)=(when t=92)= 97
+        As long as these indices are positive, everything is fine. As indices passed to an array can't be negative.
+        '''
         count = count + 1
 
 
@@ -161,10 +175,12 @@ wyy = np.zeros((num_points,1))
 
 N = 2*boundary-1  # odd number of points to use in fitting
 Nx = 2*boundary_x-1  # odd number of points to use in fitting
+
+
 deg = 5 # degree of polynomial to use
 
 for p in points.keys():
-    if p%10000==0:
+    if p%10000==0: # Printing the progress
         print('Step: ',str(p),' of ',str(len(points)))
     [x,y,t] = points[p]
     w[p] = Wn[x,y,t]
