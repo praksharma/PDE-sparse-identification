@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-# Don't use this code anymore
-# Don't use this code anymore
-# Don't use this code anymore
-# Don't use this code anymore
-# Don't use this code anymore
 # # PDE-FIND for identifying Navier-Stokes
 # 
 # Samuel Rudy, 2016
@@ -111,24 +106,31 @@ print('Data successfully reshaped after SVD')
 
 # In[7]:
 
-
+print('Picking up random points from the data')
 # Sample a collection of data points, stay away from edges so I can just use centered finite differences.
-num_xy = 5000
+# The coordinates is chosen randomly from the sliced data. That is why random.choice is used here
+np.random.seed(0) # generates same set of random numbers each time
+num_xy = 5000 # number of x and y points to be taken randomly in the collection
 # 2t+12=steps =>t<44.5
-num_t = 40
-num_points = num_xy * num_t
-boundary = 5
-boundary_x = 10
-points = {}
+num_t = 40 # number of timesteps to be taken in the collection
+num_points = num_xy * num_t # total number of points in the collection
+# As we can't take derivative of the corner data using polynomial interpolation
+boundary = 5 # Selected points in y axis [boundary:m-boundary]
+boundary_x = 10 # Selected points in x axis [boundary_x:n-boundary_x]
+points = {} # dictionary to store the collection
 count = 0
 scatterx=np.array([])
 scattery=np.array([])
 for p in range(num_xy):
-    x = np.random.choice(np.arange(boundary_x,n-boundary_x),1)[0]
-    y = np.random.choice(np.arange(boundary,m-boundary),1)[0]
+    x = np.random.choice(np.arange(boundary_x,n-boundary_x),1)[0] # randomly choose any x coordinate
+    y = np.random.choice(np.arange(boundary,m-boundary),1)[0] # randomly choose any y coordinate 
     scatterx=np.append(scatterx, x)
     scattery=np.append(scattery, y)
+    # the following loop would insert same x and y coordinates for each time step
     for t in range(num_t):
+        # t ranges from max(boundary, boundary_x) to num_t+max(boundary, boundary_x)
+        # ensure that max(boundary, boundary_x)!<0 && num_t+max(boundary, boundary_x)!>steps
+        # The t starts from max(boundary, boundary_x) because we need previous time steps for partial derivative wrt time
         points[count] = [x,y,2*t+12]
         '''
         Please note: boundary = 5, boundary_x = 10, steps=101 and num_t=40
@@ -146,7 +148,16 @@ for p in range(num_xy):
         '''
         count = count + 1
 
+'''
+                       m
+             --------------------
+             |                  |
+boundary_x   |      domain      |  n
+             |                  |
+             --------------------
+                   boundary
 
+'''
 # ## Construct $\Theta (U)$ and compute $U_t$
 # 
 # Take derivatives and assemble into $\Theta(\omega, u ,v)$
@@ -198,11 +209,11 @@ for p in points.keys():
     wx[p] = x_diff[0]
     wy[p] = y_diff[0]
     
-    x_diff_yp = PolyDiffPoint(Wn[int(x-(Nx-1)/2):int(x+(Nx+1)/2),y+1,t], np.arange(Nx)*dx, deg, 2)
-    x_diff_ym = PolyDiffPoint(Wn[int(x-(Nx-1)/2):int(x+(Nx+1)/2),y-1,t], np.arange(Nx)*dx, deg, 2)
+    x_diff_yp = PolyDiffPoint(Wn[int(x-(Nx-1)/2):int(x+(Nx+1)/2),y+1,t], np.arange(Nx)*dx, deg, 2) # (w_x)y(n+1)
+    x_diff_ym = PolyDiffPoint(Wn[int(x-(Nx-1)/2):int(x+(Nx+1)/2),y-1,t], np.arange(Nx)*dx, deg, 2) # (w_x)y(n-1)
     
     wxx[p] = x_diff[1]
-    wxy[p] = (x_diff_yp[0]-x_diff_ym[0])/(2*dy)
+    wxy[p] = (x_diff_yp[0]-x_diff_ym[0])/(2*dy) # central difference
     wyy[p] = y_diff[1]
 
 
