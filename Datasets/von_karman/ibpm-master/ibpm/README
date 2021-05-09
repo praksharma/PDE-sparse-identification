@@ -5,6 +5,7 @@ Note:
 2. Please ensure that the /config/make.inc links make.inc.gcc  
 if not, please see the issue created by me on their Github repository.  
 (https://github.com/cwrowley/ibpm/issues/13)
+In short, this is the direct solution (https://github.com/cwrowley/ibpm/issues/13#issuecomment-832220357)
 
 Getting started
 ===============
