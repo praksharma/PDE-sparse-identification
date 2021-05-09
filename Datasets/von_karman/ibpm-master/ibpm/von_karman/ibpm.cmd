@@ -1,0 +1,1 @@
+./build/ibpm -outdir von_karman/ -tecplot 10 -tecplotallgrids 0 -restart 100 -nx 450 -ny 200 -ngrid 4 -length 9 -xoffset -1 -yoffset -2 -xshift 0.75 -geom von_karman/cylinder.geom -ubf 0 -Re 100 -ic von_karman/ibpm15000.bin -dt 0.02 -nsteps 1000
