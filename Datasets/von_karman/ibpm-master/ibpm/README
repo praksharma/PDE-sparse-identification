@@ -1,14 +1,10 @@
 README for Immersed Boundary Projection Method (IBPM)
 =====================================================
-
-The code contained in this distribution uses an immersed boundary method to
-solve the two-dimensional incompressible Navier-Stokes equations around
-complex geometries, using the projection method described in Taira and
-Colonius (2007). In particular, this code implements the "fast method"
-described in Section 3.3 of Colonius and Taira (2008), using the multi-domain
-approach for far-field boundary conditions, as described in section 4 of this
-reference.
-
+Note:  
+1. I have compiled the documentation (tex file).
+2. Please ensure that the /config/make.inc links make.inc.gcc  
+if not, please see the issue created by me on their Github repository.  
+(https://github.com/cwrowley/ibpm/issues/13)
 
 Getting started
 ===============
