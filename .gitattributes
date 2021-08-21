@@ -1,2 +1,3 @@
 4. dataset generation/circledata/* linguist-vendored
 Datasets/von_karman/ibpm-master/* linguist-vendored
+*.cpp linguist-language=Python
