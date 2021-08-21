@@ -1,4 +1,2 @@
-*.plt linguist-detectable=false
-*.cpp linguist-detectable=false
-*.geo linguist-detectable=false
-*.jl linguist-detectable=false
+4. dataset generation/circledata/* linguist-vendored
+Datasets/von_karman/ibpm-master/* linguist-vendored
