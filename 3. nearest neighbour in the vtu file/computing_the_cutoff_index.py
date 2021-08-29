@@ -42,16 +42,24 @@ y = y_meshgrid[row_min,0]
 width = abs(x_meshgrid[0,column_max]-x) # width symbolises columns
 height = abs(y_meshgrid[row_max,0]-y) # height symbolises rows
 
-plt.figure(1)
-plot=plt.pcolor(x_meshgrid,y_meshgrid,normed_u,cmap='jet',vmin=1e-3, vmax=np.max(normed_u))
+fig=plt.figure(1)
+#plt.title('velocity magnitude')
+plot=plt.pcolor(x_meshgrid,y_meshgrid,normed_u,cmap='jet',vmin=1e-3, vmax=1)#np.max(normed_u))
 plt.gca().set_aspect('equal', adjustable='box')
 plt.colorbar(orientation='horizontal')
+plot.cmap.set_under('white')
 plot.cmap.set_over('white')
-plot.cmap.set_over('white')
- 
+#fig.patch.set_facecolor('grey') # grey background to match with legacy paraview
+# Turn off tick labels
+plt.xticks([])
+plt.yticks([])
+# saving
+#plt.savefig('structured.jpg',dpi=400)
+
+#making a rectangle
 rect=patches.Rectangle((x, y), width, height, linewidth=2, edgecolor='black', facecolor='none')
 plt.gca().add_patch(rect)
-
+plt.savefig('structured_with_rectangle.jpg',dpi=400)
 #%% Cutting out the data involving the cylinder for knowing the index to be used in future work
 
 print('Removing geometry from the data')
